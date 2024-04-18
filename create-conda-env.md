@@ -47,9 +47,12 @@ R CMD INSTALL terra_new_1.7-71.tar.gz
 ### mkde install
 
 In DESCRIPTION make following edit
-`Imports: Rcpp (>= 0.9.6), sp, raster --> Imports: Rcpp (>= 0.9.6), sf, terra`
 
-Then make new mkde package with automatically built NAMESPACE, but need to add `useDynLib(mkde, .registration = TRUE)`
+```Imports: Rcpp (>= 0.9.6), sp, raster --> Imports: Rcpp (>= 0.9.6), sf, terra```
+
+Then make new mkde package with automatically built NAMESPACE, but need to add 
+
+```useDynLib(mkde, .registration = TRUE)```
 
 ```
 R CMD build mkde
