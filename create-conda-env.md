@@ -2,52 +2,66 @@ This document describes the steps needed to create the conda environment on Expa
 The updates described below to the mkde package will be pushed to CRAN once transtion from sp and raster
 to terra has been completed.
 
---- Create conda environment and install packages ---
+### Create conda environment and install packages
 
-conda update -n base -c defaults conda
-conda create -n r_seg r-base
-conda activate r_seg
-conda install -c anaconda boost
-conda install udunits2
+For reasons that aren't entirely clear, the boost install using the default channel does not work,
+using the anaconda channel fixes.
+
+```
+conda update -n base -c defaults conda  
+conda create -n r_seg r-base. 
+conda activate r_seg  
+conda install -c anaconda boost  
+conda install udunits2  
 conda install gdal
+```
 
 launch R, then do following from prompt
 
-install.packages('Rcpp')
-install.packages('sf')
+```
+install.packages('Rcpp')  
+install.packages('sf')  
 install.packages("codetools")
+``` 
 
---- terra install ---
+### terra install
 
 Install chokes when building RcppModule.o with
 x86_64-conda-linux-gnu-c++, use the following to manually build this
 object with g++, create new archive and install from command line.
 
-wget https://cran.r-project.org/src/contrib/terra_1.7-71.tar.gz
+```wget https://cran.r-project.org/src/contrib/terra_1.7-71.tar.gz
 gunzip -xzf terra_1.7-71.tar.gz
 cd terra/src
-
+```
+```
 g++ -std=gnu++17 -I"/home/seg/miniconda3/envs/r_seg/lib/R/include" -DNDEBUG -DHAVE_PROJ_H -I/home/seg/miniconda3/envs/r_seg/include -I/home/seg/miniconda3/envs/r_seg/include -I'/home/seg/miniconda3/envs/r_seg/lib/R/library/Rcpp/include' -DNDEBUG -D_FORTIFY_SOURCE=2 -O2 -isystem /home/seg/miniconda3/envs/r_seg/include -I/home/seg/miniconda3/envs/r_seg/include -Wl,-rpath-link,/home/seg/miniconda3/envs/r_seg/lib    -fpic  -fvisibility-inlines-hidden  -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/seg/miniconda3/envs/r_seg/include -fdebug-prefix-map=/workspace/croot/r-base_1695428141831/work=/usr/local/src/conda/r-base-4.3.1 -fdebug-prefix-map=/home/seg/miniconda3/envs/r_seg=/usr/local/src/conda-prefix  -c RcppModule.cpp -o RcppModule.o
+```
 
+```
 cd
 tar -cf terra_new_1.7-71.tar.gz terra
 R CMD INSTALL terra_new_1.7-71.tar.gz
+```
 
---- mkde install ---
+### mkde install
 
 In DESCRIPTION make following edit
-Imports: Rcpp (>= 0.9.6), sp, raster --> Imports: Rcpp (>= 0.9.6), sf, terra
+`Imports: Rcpp (>= 0.9.6), sp, raster --> Imports: Rcpp (>= 0.9.6), sf, terra`
 
-Then make new mkde package with automatically built NAMESPACE
+Then make new mkde package with automatically built NAMESPACE, but need to add `useDynLib(mkde, .registration = TRUE)`
+
+```
 R CMD build mkde
 mv mkde_0.2.tar.gz mkde_new_0.2.tar.gz
-
 R CMD INSTALL mkde_new_0.2.tar.gz
+```
 
---- Additional notes ---
+### Additional notes
 
-Get the following during terra install from command line after building RcppModule.o
+Get the following warnings during terra install from command line after building RcppModule.o
 
+```
 ** byte-compile and prepare package for lazy loading
 in method for ‘sds’ with signature ‘x="stars"’: no definition for class “stars”
 in method for ‘sds’ with signature ‘x="stars_proxy"’: no definition for class “stars_proxy”
@@ -92,12 +106,15 @@ in method for ‘vect’ with signature ‘x="sfc"’: no definition for class �
 in method for ‘vect’ with signature ‘x="XY"’: no definition for class “XY”
 Creating a generic function for ‘unserialize’ from package ‘base’ in package ‘terra’
 Creating a generic function for ‘readRDS’ from package ‘base’ in package ‘terra’
+```
 
-Got following error when doing install.packages("terra")
+Got following error when doing install.packages("terra"). Avoided by taking steps described earlier
 
+```
 x86_64-conda-linux-gnu-c++ -std=gnu++17 -I"/home/seg/miniconda3/envs/r_seg/lib/R/include" -DNDEBUG -DHAVE_PROJ_H -I/home/seg/miniconda3/envs/r_seg/include -I/home/seg/miniconda3/envs/r_seg/include -I'/home/seg/miniconda3/envs/r_seg/lib/R/library/Rcpp/include' -DNDEBUG -D_FORTIFY_SOURCE=2 -O2 -isystem /home/seg/miniconda3/envs/r_seg/include -I/home/seg/miniconda3/envs/r_seg/include -Wl,-rpath-link,/home/seg/miniconda3/envs/r_seg/lib    -fpic  -fvisibility-inlines-hidden  -fmessage-length=0 -march=nocona -mtune=haswell -ftree-vectorize -fPIC -fstack-protector-strong -fno-plt -O2 -ffunction-sections -pipe -isystem /home/seg/miniconda3/envs/r_seg/include -fdebug-prefix-map=/workspace/croot/r-base_1695428141831/work=/usr/local/src/conda/r-base-4.3.1 -fdebug-prefix-map=/home/seg/miniconda3/envs/r_seg=/usr/local/src/conda-prefix  -c RcppModule.cpp -o RcppModule.o
 {standard input}: Assembler messages:
 {standard input}: Error: open CFI at the end of file; missing .cfi_endproc directive
 x86_64-conda-linux-gnu-c++: fatal error: Killed signal terminated program cc1plus
 compilation terminated.
 make: *** [/home/seg/miniconda3/envs/r_seg/lib/R/etc/Makeconf:200: RcppModule.o] Error 1
+```
