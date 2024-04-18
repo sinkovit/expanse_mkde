@@ -1,6 +1,8 @@
 # Script reads file containing data and parameters that had been exported from SEG (data2d.rds),
 # constructs 2D home range and writes results (mkde.obj.rds)
 
+# To use, run "conda activate r_seg"
+
 library(mkde)
 data <- readRDS("data2d.rds")
 mv.dat <- initializeMovementData(data$t, data$x, data$y, sig2obs = data$sig2obs, t.max = data$t.max)
